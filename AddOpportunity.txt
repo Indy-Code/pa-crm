@@ -1,0 +1,19 @@
+AddOpportunity
+AddContact
+AddAccount
+LinkContactToOpportunity
+LinkAccountToOpportunity
+ChangeLeadLifeCycleState
+
+
+Opportunity (linking contact and account ids)
+Contact
+Account
+
+
+AddOpportunity { ReferenceLeadId = lead.Id }
+AddContact { FirstName = lead.Contact.FirstName, LastName = lead.Contact.LastName, }
+LinkContactToOpportunity { OpportunityId = opportunityId.Value, ContactId = contactId.Value }
+AddAccount { Name = lead.Account.Name
+LinkAccountToOpportunity { OpportunityId = opportunityId.Value, AccountId = accountId.Value }
+ChangeLeadLifeCycleState { LeadId = lead.Id, LifeCycleState = LifeCycleState.Converted }

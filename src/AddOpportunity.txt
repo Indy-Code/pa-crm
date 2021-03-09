@@ -1,0 +1,12 @@
+AddOpportunity
+AddContact
+AddAccount
+LinkContactToOpportunity
+LinkAccountToOpportunity
+ChangeLeadLifeCycleState
+
+
+Opportunity (linking contact and account ids)
+Contact
+Account
+
