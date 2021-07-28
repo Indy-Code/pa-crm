@@ -1,6 +1,6 @@
 ﻿namespace Messages.Commands
 {
-    public class CreatNewOpportunityFromLead
+    public class CreateNewOpportunityFromLead
     {
         public string OpportunityId { get; set; }
         public string ContactId { get; set; }
