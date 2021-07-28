@@ -11,8 +11,10 @@ namespace EndpointHost
             return transport =>
             {
                 var routing = transport.Routing();
-                routing.RouteToEndpoint(typeof(CreatNewOpportunityFromLead), "EndpointHost");
+                routing.RouteToEndpoint(typeof(CreateNewOpportunityFromLead), "EndpointHost");
                 routing.RouteToEndpoint(typeof(LinkContactToOpportunity), "EndpointHost");
+                routing.RouteToEndpoint(typeof(LinkAccountToOpportunity), "EndpointHost");
+                routing.RouteToEndpoint(typeof(ChangeLeadLifeCycleState), "EndpointHost");
             };
         }
     }

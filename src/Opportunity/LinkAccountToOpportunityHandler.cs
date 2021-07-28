@@ -6,13 +6,13 @@ using NServiceBus.Logging;
 
 namespace Opportunity
 {
-    internal class LinkContactToOpportunityHandler : IHandleMessages<LinkContactToOpportunity>
+    internal class LinkAccountToOpportunityHandler : IHandleMessages<LinkAccountToOpportunity>
     {
         private static ILog log = LogManager.GetLogger<LinkContactToOpportunityHandler>();
 
-        public async Task Handle(LinkContactToOpportunity message, IMessageHandlerContext context)
+        public async Task Handle(LinkAccountToOpportunity message, IMessageHandlerContext context)
         {
-            log.Info($"LinkContactToOpportunityHandler: ContactId [{message.ContactId}] OpportunityId [{message.OpportunityId}]");
+            log.Info($"LinkAccountToOpportunityHandler: AccountId [{message.AccountId}] OpportunityId [{message.OpportunityId} ]");
 
             await context.Send(new ChangeLeadLifeCycleState()
             {

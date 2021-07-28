@@ -6,13 +6,13 @@ using NServiceBus.Logging;
 
 namespace Contact
 {
-    class CreateContactFromOpportunityHandlers : IHandleMessages<CreateContactFromOpportunity>
+    internal class CreateContactFromOpportunityHandlers : IHandleMessages<CreateContactFromOpportunity>
     {
-        static ILog log = LogManager.GetLogger<CreateContactFromOpportunityHandlers>();
+        private static ILog log = LogManager.GetLogger<CreateContactFromOpportunityHandlers>();
 
         public async Task Handle(CreateContactFromOpportunity message, IMessageHandlerContext context)
         {
-            log.Info($"CreateContactFromOpportunityHandlers: OpportunityId [{message.OpportunityId}]");
+            log.Info($"CreateContactFromOpportunityHandlers: ContactId [{message.ContactId}] OpportunityId [{message.OpportunityId}]");
 
             await context.Publish(new ContactFromOpportunityCreated()
             {

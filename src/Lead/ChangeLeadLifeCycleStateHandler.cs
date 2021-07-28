@@ -8,11 +8,11 @@ namespace Lead
 {
     public class ChangeLeadLifeCycleStateHandler : IHandleMessages<ChangeLeadLifeCycleState>
     {
-        static ILog log = LogManager.GetLogger<ChangeLeadLifeCycleStateHandler>();
+        private static ILog log = LogManager.GetLogger<ChangeLeadLifeCycleStateHandler>();
 
         public async Task Handle(ChangeLeadLifeCycleState message, IMessageHandlerContext context)
         {
-            log.Info($"ChangeLeadLifeCycleStateHandler: OpportunityId [{message.OpportunityId}]");
+            log.Info($"ChangeLeadLifeCycleStateHandler: LeadId [{message.LeadId}] OpportunityId [{message.OpportunityId}]");
 
             await context.Publish(new LeadLifeCycleStateChanged()
             {
