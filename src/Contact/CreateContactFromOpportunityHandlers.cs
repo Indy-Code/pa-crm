@@ -1,18 +1,20 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using MassTransit;
 using Messages.Commands;
 using Messages.Events;
-using NServiceBus;
-using NServiceBus.Logging;
 
 namespace Contact
 {
-    internal class CreateContactFromOpportunityHandlers : IHandleMessages<CreateContactFromOpportunity>
+    internal class CreateContactFromOpportunityHandlers : IConsumer<CreateContactFromOpportunity>
     {
-        private static ILog log = LogManager.GetLogger<CreateContactFromOpportunityHandlers>();
+        // private static ILog log = LogManager.GetLogger<CreateContactFromOpportunityHandlers>();
 
-        public async Task Handle(CreateContactFromOpportunity message, IMessageHandlerContext context)
+        public async Task Consume(ConsumeContext<CreateContactFromOpportunity> context)
         {
-            log.Info($"CreateContactFromOpportunityHandlers: ContactId [{message.ContactId}] OpportunityId [{message.OpportunityId}]");
+            var message = context.Message;
+
+            Console.WriteLine($"CreateContactFromOpportunityHandlers: ContactId [{message.ContactId}] OpportunityId [{message.OpportunityId}]");
 
             await context.Publish(new ContactFromOpportunityCreated()
             {

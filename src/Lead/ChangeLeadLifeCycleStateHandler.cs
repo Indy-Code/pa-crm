@@ -2,26 +2,27 @@
 using System.Threading.Tasks;
 using Lead.Data;
 using Lead.Data.DataModel;
+using MassTransit;
 using Messages.Commands;
 using Messages.Events;
-using NServiceBus;
-using NServiceBus.Logging;
 
 namespace Lead
 {
-    public class ChangeLeadLifeCycleStateHandler : IHandleMessages<ChangeLeadLifeCycleState>
+    public class ChangeLeadLifeCycleStateHandler : IConsumer<ChangeLeadLifeCycleState>
     {
-        private static ILog log = LogManager.GetLogger<ChangeLeadLifeCycleStateHandler>();
+        // private static ILog log = LogManager.GetLogger<ChangeLeadLifeCycleStateHandler>();
         private readonly LeadWriteRepo leadWriteRepo;
 
-        public async Task Handle(ChangeLeadLifeCycleState message, IMessageHandlerContext context)
+        public async Task Consume(ConsumeContext<ChangeLeadLifeCycleState> context)
         {
-            log.Info($"ChangeLeadLifeCycleStateHandler: LeadId [{message.LeadId}] OpportunityId [{message.OpportunityId}]");
+            var message = context.Message;
+
+           Console.WriteLine($"ChangeLeadLifeCycleStateHandler: LeadId [{message.LeadId}] OpportunityId [{message.OpportunityId}]");
 
             // sample only
             LeadModel lead = new LeadModel
             {
-                LeadId = Guid.Parse(message.LeadId)
+                LeadId = message.LeadId
             };
 
             await leadWriteRepo.Add(lead).ConfigureAwait(false);

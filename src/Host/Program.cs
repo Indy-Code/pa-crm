@@ -1,27 +1,58 @@
-﻿using Common.Configuration;
-using NServiceBus;
+﻿using Account;
+using MassTransit;
+using Messages.Commands;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EndpointHost
 {
     class Program
     {
-        static async Task Main()
+        public static async Task Main()
         {
-            Console.Title = "EndpointHost";
+            var busControl = Bus.Factory.CreateUsingRabbitMq(
+                cfg => { cfg.ReceiveEndpoint("EndpointHost", e =>
+                {
+                    e.Consumer<CreateAccountFromOpportunityHandler>();
+                    // e.Consumer<>();
+                });
 
-            var endpointConfiguration = new EndpointConfiguration("EndpointHost");
-            endpointConfiguration.ApplyEndpointConfiguration(EndpointMappings.MessageEndpointMappings());
+                    cfg.Host("localhost", "/", h =>
+                    {
+                        h.Username("guest");
+                        h.Password("guest");
+                    });
+                });
 
-            var endpointInstance = await Endpoint.Start(endpointConfiguration)
-                .ConfigureAwait(false);
+            EndpointConvention.Map<CreateNewOpportunityFromLead>(new Uri("rabbitmq://localhost:5673/EndpointHost"));
+            EndpointConvention.Map<LinkContactToOpportunity>(new Uri("rabbitmq://localhost:5673/EndpointHost"));
+            EndpointConvention.Map<LinkAccountToOpportunity>(new Uri("rabbitmq://localhost:5673/EndpointHost"));
+            EndpointConvention.Map<ChangeLeadLifeCycleState>(new Uri("rabbitmq://localhost:5673/EndpointHost"));
 
-            Console.WriteLine("Press Enter to exit.");
-            Console.ReadLine();
+            var source = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
-            await endpointInstance.Stop()
-                .ConfigureAwait(false);
+            await busControl.StartAsync(source.Token);
+            
+            try
+            {
+                while (true)
+                {
+                    string value = await Task.Run(() =>
+                    {
+                        Console.WriteLine("Enter message (or quit to exit)");
+                        Console.Write("> ");
+                        return Console.ReadLine();
+                    });
+
+                    if ("quit".Equals(value, StringComparison.OrdinalIgnoreCase))
+                        break;
+                }
+            }
+            finally
+            {
+                await busControl.StopAsync();
+            }
         }
     }
 }

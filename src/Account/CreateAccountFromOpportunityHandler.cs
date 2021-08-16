@@ -1,27 +1,27 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using MassTransit;
 using Messages.Commands;
 using Messages.Events;
-using NServiceBus;
-using NServiceBus.Logging;
 
 namespace Account
 {
-    public class CreateAccountFromOpportunityHandler : IHandleMessages<CreateAccountFromOpportunity>
+    public class CreateAccountFromOpportunityHandler : IConsumer<CreateAccountFromOpportunity>
     {
-        private static ILog log = LogManager.GetLogger<CreateAccountFromOpportunityHandler>();
+        // private static ILog log = LogManager.GetLogger<CreateAccountFromOpportunityHandler>();
 
-        public async Task Handle(CreateAccountFromOpportunity message, IMessageHandlerContext context)
+        public async Task Consume(ConsumeContext<CreateAccountFromOpportunity> context)
         {
-            log.Info($"CreateAccountFromOpportunityHandler: AccountId [{message.AccountId}] OpportunityId [{message.OpportunityId}]");
+            Console.WriteLine($"CreateAccountFromOpportunityHandler: AccountId [{context.Message.AccountId}] OpportunityId [{context.Message.OpportunityId}]");
 
             // if the account exist we can publish a different event to specify the account already exists?
 
             await context.Publish(new AccountFromOpportunityCreated()
             {
-                AccountId = message.AccountId,
-                OpportunityId = message.OpportunityId,
-                ContactId = message.ContactId,
-                LeadId = message.LeadId
+                AccountId = context.Message.AccountId,
+                OpportunityId = context.Message.OpportunityId,
+                ContactId = context.Message.ContactId,
+                LeadId = context.Message.LeadId
             });
         }
     }

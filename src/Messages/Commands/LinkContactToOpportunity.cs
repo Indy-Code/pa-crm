@@ -1,11 +1,13 @@
-﻿namespace Messages.Commands
+﻿using System;
+
+namespace Messages.Commands
 {
     public class LinkContactToOpportunity
     {
-        public string OpportunityId { get; set; }
-        public string ContactId { get; set; }
-        public string AccountId { get; set; }
-        public string LeadId { get; set; }
+        public Guid OpportunityId { get; set; }
+        public Guid ContactId { get; set; }
+        public Guid AccountId { get; set; }
+        public Guid LeadId { get; set; }
 
     }
 }
