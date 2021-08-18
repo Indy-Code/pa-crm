@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Threading.Tasks;
+using MassTransit;
 using Messages.Commands;
-using NServiceBus;
 
 namespace Client
 {
     internal class DispatchMessagesFromApi
     {
-        internal static async Task Dispatch(IEndpointInstance endpointInstance)
+        internal static async Task Dispatch(IBusControl endpointInstance)
         {
-            var opertunityId = Guid.NewGuid().ToString();
-            var leadId = Guid.NewGuid().ToString();
-            var contactId = Guid.NewGuid().ToString();
-            var accountId = Guid.NewGuid().ToString();
+            var opertunityId = Guid.NewGuid();
+            var leadId = Guid.NewGuid();
+            var contactId = Guid.NewGuid();
+            var accountId = Guid.NewGuid();
 
             await endpointInstance.Send(new CreateOpportunityFromLead() {
                 OpportunityId = opertunityId,

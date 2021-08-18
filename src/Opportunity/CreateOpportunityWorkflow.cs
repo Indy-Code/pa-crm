@@ -1,41 +1,48 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
+using MassTransit;
+using MassTransit.Saga;
 using Messages.Commands;
 using Messages.Events;
-using NServiceBus;
-using NServiceBus.Logging;
 
 namespace Opportunity
 {
-    public class CreateOpportunityPolicyData : ContainSagaData
-    {
-        public bool AccountCreatedForOpportunity { get; internal set; }
-        public string AccountId { get; internal set; }
-        public bool ContactCreatedForOpportunity { get; internal set; }
-        public string ContactId { get; internal set; }
-        public string LeadId { get; internal set; }
-        public bool OpportunityCreated { get; internal set; }
-        public string OpportunityId { get; internal set; }
-    }
-
     public class CreateOpportunityWorkflow
-            : Saga<CreateOpportunityPolicyData>,
-        IAmStartedByMessages<CreateOpportunityFromLead>,
-        IHandleMessages<OpportunityFromLeadCreated>,
-        IHandleMessages<ContactFromOpportunityCreated>,
-        IHandleMessages<AccountFromOpportunityCreated>
+            : ISaga,
+        InitiatedBy<CreateOpportunityFromLead>,
+        Orchestrates<OpportunityFromLeadCreated>,
+        Orchestrates<ContactFromOpportunityCreated>,
+        Orchestrates<AccountFromOpportunityCreated>
     {
         // This is where we do our business logic regarding how we create an opportunity
-        private static ILog log = LogManager.GetLogger<CreateOpportunityWorkflow>();
+        //private static ILog log = LogManager.GetLogger<CreateOpportunityWorkflow>();
 
-        public async Task Handle(CreateOpportunityFromLead message, IMessageHandlerContext context)
+        public Guid CorrelationId { get; set; }
+
+        public Expression<Func<CreateOpportunityWorkflow, CreateOpportunityFromLead, bool>> CorrelationExpression =>
+       (saga, message) => saga.CorrelationId == message.OpportunityId;
+
+        // saga data
+        public bool AccountCreatedForOpportunity { get; set; }
+        public Guid AccountId { get; set; }
+        public bool ContactCreatedForOpportunity { get; set; }
+        public Guid ContactId { get; set; }
+        public Guid LeadId { get; set; }
+        public bool OpportunityCreated { get; set; }
+        public Guid OpportunityId { get; set; }
+
+        public async Task Consume(ConsumeContext<CreateOpportunityFromLead> context)
         {
-            log.Info($"CreateOpportunityWorkflow.CreateOpportunityFromLead: OpportunityId [{message.OpportunityId}] LeadId [{message.LeadId}]");
+            var message = context.Message;
+
+            Console.WriteLine($"CreateOpportunityWorkflow.CreateOpportunityFromLead: OpportunityId [{context.Message.OpportunityId}] LeadId [{message.LeadId}]");
             // here we can start processing each action we need to take and at the end of the saga convert the lead
             // sent a message to the Opportunity component
             // Listen to events from other Components
-            Data.LeadId = message.LeadId;
-            Data.ContactId = message.ContactId;
-            Data.AccountId = message.AccountId;
+            LeadId = message.LeadId;
+            ContactId = message.ContactId;
+            AccountId = message.AccountId;
 
             await context.Send(new CreateNewOpportunityFromLead()
             {
@@ -46,20 +53,23 @@ namespace Opportunity
             });
         }
 
-        public async Task Handle(OpportunityFromLeadCreated message, IMessageHandlerContext context)
+        public async Task Consume(ConsumeContext<OpportunityFromLeadCreated> context)
         {
-            log.Info($"OpportunityFromLeadCreated: OpportunityId [{message.OpportunityId}] LeadId [{message.LeadId}]");
+            var message = context.Message;
+            Console.WriteLine($"OpportunityFromLeadCreated: OpportunityId [{message.OpportunityId}] LeadId [{message.LeadId}]");
 
-            Data.OpportunityCreated = true;
+            OpportunityCreated = true;
 
             await ProcessCheckFlow(context);
         }
 
-        public async Task Handle(ContactFromOpportunityCreated message, IMessageHandlerContext context)
+        public async Task Consume(ConsumeContext<ContactFromOpportunityCreated> context)
         {
-            log.Info($"ContactFromOpportunityCreated: ContactId [{message.ContactId}] OpportunityId [{message.OpportunityId}]");
+            var message = context.Message;
 
-            Data.ContactCreatedForOpportunity = true;
+            Console.WriteLine($"ContactFromOpportunityCreated: ContactId [{message.ContactId}] OpportunityId [{message.OpportunityId}]");
+
+            ContactCreatedForOpportunity = true;
 
             await context.Send(new LinkContactToOpportunity()
             {
@@ -72,11 +82,13 @@ namespace Opportunity
             await ProcessCheckFlow(context);
         }
 
-        public async Task Handle(AccountFromOpportunityCreated message, IMessageHandlerContext context)
+        public async Task Consume(ConsumeContext<AccountFromOpportunityCreated> context)
         {
-            log.Info($"AccountFromOpportunityCreated:  AccountId [{message.AccountId}] OpportunityId [{message.OpportunityId}]");
+            var message = context.Message;
 
-            Data.AccountCreatedForOpportunity = true;
+            Console.WriteLine($"AccountFromOpportunityCreated:  AccountId [{message.AccountId}] OpportunityId [{message.OpportunityId}]");
+
+            AccountCreatedForOpportunity = true;
 
             await context.Send(new LinkAccountToOpportunity()
             {
@@ -89,34 +101,23 @@ namespace Opportunity
             await ProcessCheckFlow(context);
         }
 
-        protected override void ConfigureHowToFindSaga(SagaPropertyMapper<CreateOpportunityPolicyData> mapper)
+        private async Task ProcessCheckFlow(ConsumeContext context)
         {
-            mapper.ConfigureMapping<CreateOpportunityFromLead>(message => message.OpportunityId)
-                .ToSaga(sagaData => sagaData.OpportunityId);
-            mapper.ConfigureMapping<OpportunityFromLeadCreated>(message => message.OpportunityId)
-                .ToSaga(sagaData => sagaData.OpportunityId);
-            mapper.ConfigureMapping<ContactFromOpportunityCreated>(message => message.OpportunityId)
-                .ToSaga(sagaData => sagaData.OpportunityId);
-            mapper.ConfigureMapping<AccountFromOpportunityCreated>(message => message.OpportunityId)
-                .ToSaga(sagaData => sagaData.OpportunityId);
-        }
-
-        private async Task ProcessCheckFlow(IMessageHandlerContext context)
-        {
-            if (Data.OpportunityCreated
-                && Data.ContactCreatedForOpportunity
-                && Data.AccountCreatedForOpportunity)
+            if (OpportunityCreated
+                && ContactCreatedForOpportunity
+                && AccountCreatedForOpportunity)
             {
-                log.Info($"ProcessCheckFlow: Completed: OpportunityId [{Data.OpportunityId}]");
+                Console.WriteLine($"ProcessCheckFlow: Completed: OpportunityId [{OpportunityId}]");
                 // convert the contact?
                 await context.Publish(new CreateOpportunityWorkflowCompleted()
                 {
-                    OpportunityId = Data.OpportunityId,
-                    AccountId = Data.AccountId,
-                    ContactId = Data.ContactId,
-                    LeadId = Data.LeadId
+                    OpportunityId = OpportunityId,
+                    AccountId = AccountId,
+                    ContactId = ContactId,
+                    LeadId = LeadId
                 });
-                MarkAsComplete();
+
+                // complete
             }
         }
     }

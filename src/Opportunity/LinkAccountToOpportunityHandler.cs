@@ -1,18 +1,20 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using MassTransit;
 using Messages.Commands;
-using Messages.Events;
 using NServiceBus;
-using NServiceBus.Logging;
 
 namespace Opportunity
 {
-    internal class LinkAccountToOpportunityHandler : IHandleMessages<LinkAccountToOpportunity>
+    internal class LinkAccountToOpportunityHandler : IConsumer<LinkAccountToOpportunity>
     {
-        private static ILog log = LogManager.GetLogger<LinkContactToOpportunityHandler>();
+        // private static ILog log = LogManager.GetLogger<LinkContactToOpportunityHandler>();
 
-        public async Task Handle(LinkAccountToOpportunity message, IMessageHandlerContext context)
+        public async Task Consume(ConsumeContext<LinkAccountToOpportunity> context)
         {
-            log.Info($"LinkAccountToOpportunityHandler: AccountId [{message.AccountId}] OpportunityId [{message.OpportunityId} ]");
+            var message = context.Message;
+
+            Console.WriteLine($"LinkAccountToOpportunityHandler: AccountId [{message.AccountId}] OpportunityId [{message.OpportunityId} ]");
 
             await context.Send(new ChangeLeadLifeCycleState()
             {

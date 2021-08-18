@@ -1,8 +1,8 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
-using Common.Configuration;
-using NServiceBus;
-using NServiceBus.Logging;
+using MassTransit;
+using Messages.Commands;
 
 namespace Client
 {
@@ -10,28 +10,27 @@ namespace Client
     {
         static async Task Main()
         {
-            Console.Title = "ClientUI";
+            var busControl = Bus.Factory.CreateUsingRabbitMq(
+                cfg =>
+                {
+                    cfg.Host("localhost", "/", h =>
+                    {
+                        h.Username("guest");
+                        h.Password("guest");
+                    });
+                });
 
-            var endpointConfiguration = new EndpointConfiguration("ClientUI");
-            endpointConfiguration.ApplyEndpointConfiguration(EndpointMappings.MessageEndpointMappings());
+            EndpointConvention.Map<CreateOpportunityFromLead>(new Uri("rabbitmq://localhost:5673/EndpointHost"));
+            EndpointConvention.Map<CreateContactFromOpportunity>(new Uri("rabbitmq://localhost:5673/EndpointHost"));
+            EndpointConvention.Map<CreateAccountFromOpportunity>(new Uri("rabbitmq://localhost:5673/EndpointHost"));
 
-            var endpointInstance = await Endpoint.Start(endpointConfiguration)
-                .ConfigureAwait(false);
+            var source = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
-            await RunLoop(endpointInstance)
-                .ConfigureAwait(false);
+            await busControl.StartAsync(source.Token);
 
-            await endpointInstance.Stop()
-                .ConfigureAwait(false);
-        }
-
-        static ILog log = LogManager.GetLogger<Program>();
-
-        static async Task RunLoop(IEndpointInstance endpointInstance)
-        {
             while (true)
             {
-                log.Info("Press 'P' to create an opportunity from lead, or 'Q' to quit.");
+                Console.WriteLine("Press 'P' to create an opportunity from lead, or 'Q' to quit.");
                 var key = Console.ReadKey();
                 Console.WriteLine();
 
@@ -40,18 +39,18 @@ namespace Client
                     case ConsoleKey.P:
                         // Instantiate the process
                         // mimic API dispatcher
-                        await DispatchMessagesFromApi.Dispatch(endpointInstance).ConfigureAwait(false);
+                        await DispatchMessagesFromApi.Dispatch(busControl).ConfigureAwait(false);
                         break;
 
                     case ConsoleKey.Q:
+                        await busControl.StopAsync();
                         return;
 
                     default:
-                        log.Info("Unknown input. Please try again.");
+                        Console.WriteLine("Unknown input. Please try again.");
                         break;
                 }
             }
-
         }
     }
 }

@@ -1,18 +1,20 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using MassTransit;
 using Messages.Commands;
 using Messages.Events;
-using NServiceBus;
-using NServiceBus.Logging;
 
 namespace Opportunity
 {
-    public class CreateNewOpportunityFromLeadHandler : IHandleMessages<CreateNewOpportunityFromLead>
+    public class CreateNewOpportunityFromLeadHandler : IConsumer<CreateNewOpportunityFromLead>
     {
-        private static ILog log = LogManager.GetLogger<CreateNewOpportunityFromLeadHandler>();
+        // private static ILog log = LogManager.GetLogger<CreateNewOpportunityFromLeadHandler>();
 
-        public async Task Handle(CreateNewOpportunityFromLead message, IMessageHandlerContext context)
+        public async Task Consume(ConsumeContext<CreateNewOpportunityFromLead> context)
         {
-            log.Info($"CreateNewOpportunityFromLeadHandler: OpportunityId [{message.OpportunityId}] LeadId [{message.LeadId}] ");
+            var message = context.Message;
+
+            Console.WriteLine($"CreateNewOpportunityFromLeadHandler: OpportunityId [{message.OpportunityId}] LeadId [{message.LeadId}] ");
 
             await context.Publish(new OpportunityFromLeadCreated()
             {

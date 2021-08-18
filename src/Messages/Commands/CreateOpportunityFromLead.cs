@@ -1,12 +1,17 @@
-﻿namespace Messages.Commands
+﻿using MassTransit;
+using System;
+
+namespace Messages.Commands
 {
-    public class CreateOpportunityFromLead
+    public class CreateOpportunityFromLead : CorrelatedBy<Guid>
     {
-        public string OpportunityId { get; set; }
-        public string LeadId { get; set; }
-        public string AccountId { get; set; }
-        public string ContactId { get; set; }
+        public Guid OpportunityId { get; set; }
+        public Guid LeadId { get; set; }
+        public Guid AccountId { get; set; }
+        public Guid ContactId { get; set; }
         public string ContactFirstName { get; set; }
         public string ContactLastName { get; set; }
+
+        public Guid CorrelationId => OpportunityId;
     }
 }

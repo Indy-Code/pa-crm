@@ -1,10 +1,12 @@
-﻿namespace Messages.Commands
+﻿using System;
+
+namespace Messages.Commands
 {
     public class CreateAccountFromOpportunity
     {
-        public string OpportunityId;
-        public string LeadId { get; set; }
-        public string ContactId { get; set; }
-        public string AccountId { get; set; }
+        public Guid OpportunityId;
+        public Guid LeadId { get; set; }
+        public Guid ContactId { get; set; }
+        public Guid AccountId { get; set; }
     }
 }
